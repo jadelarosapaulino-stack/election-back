@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  # db:
+  #   image: postgres:17
+  #   restart: always
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_PASSWORD:  ${DB_PASSWORD}
+  #     POSTGRES_DB: ${DB_NAME}
+  #   container_name: teslodb
+  #   volumes:
+  #     - ./postgres:/var/lib/postgresql/data
+
+
+  mongo:
+    image: mongo:6
+    restart: always
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  postgres_data:
+  mongo_data:
