@@ -4,10 +4,11 @@ import { TenantsService } from './users-settings.service';
 import { TenantsController } from './users-settings.controller';
 import { UserSettings } from './entities/user-settings.entity';
 import { RequestContextModule } from 'nestjs-request-context/dist/request-context.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [TenantsController],
-  imports: [RequestContextModule, TypeOrmModule.forFeature([UserSettings])],
+  imports: [RequestContextModule, TypeOrmModule.forFeature([UserSettings]), AuthModule],
   providers: [TenantsService],
   exports: [TenantsService],
 })

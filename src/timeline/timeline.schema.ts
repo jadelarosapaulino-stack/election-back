@@ -15,6 +15,11 @@ export const TimelineSchema = new Schema(
   { timestamps: true }, // crea createdAt y updatedAt
 );
 
+// H-21: TTL index — auto-expire audit/timeline documents after 90 days
+TimelineSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+TimelineSchema.index({ electionId: 1, createdAt: -1 });
+TimelineSchema.index({ electionId: 1, action: 1, 'metadata.deviceId': 1, createdAt: -1 });
+
 // export interface Timeline {
 //   voterId: string;
 //   electionId: string;

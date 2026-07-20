@@ -1,7 +1,8 @@
 export enum StatusType {
-    ACTIVWE = 'active',
-    COMPLETED = 'completed',
-    RUNNING = 'running',
-    INACTIVE = 'inactive',
-    SUSPENDED = 'suspended'
-  }
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  RUNNING = 'running',
+  INCOMPLETE = 'incomplete',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}

@@ -14,6 +14,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { fileFilter, fileNamer } from './helpers';
 import { ConfigService } from '@nestjs/config';
+import { Auth } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
 
 
 @Controller('files')
@@ -30,6 +32,7 @@ export class FilesController {
   }
 
   @Post()
+  @Auth(ValidRoles.admin)
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: fileFilter,
@@ -45,6 +48,7 @@ export class FilesController {
   }
 
   @Delete(':fileName')
+  @Auth(ValidRoles.admin)
   deleteFile(@Param('fileName') fileName: string) {
     return this.filesService.deleteFile(fileName);
   }

@@ -1,2 +1,2 @@
-export { JwtPayload } from './jwt-payload';
-export { ValidRoles } from './valid-roles';
+// Re-export from shared package for backward compatibility
+export { JwtPayload, ValidRoles } from '@org/nest-auth';

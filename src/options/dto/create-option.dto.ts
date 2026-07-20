@@ -1,6 +1,7 @@
 import {
   IsEnum,
   IsNumber,
+  IsOptional,
   IsString,
 } from 'class-validator';
 import { Question } from 'src/questions/entities/question.entity';
@@ -11,18 +12,22 @@ export class CreateOptionDto {
   title: string;
 
   @IsString()
+  @IsOptional()
   description?: string;
 
   @IsNumber()
+  @IsOptional()
   order?: number;
 
   @IsString()
   question: Question;
 
   @IsString()
+  @IsOptional()
   images?: string;
 
   @IsString()
+  @IsOptional()
   files?: string;
 
   @IsEnum(OptionType)

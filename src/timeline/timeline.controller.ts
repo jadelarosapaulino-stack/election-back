@@ -5,8 +5,11 @@ import {
 } from '@nestjs/common';
 
 import { TimelineService } from './timeline.service';
+import { Auth } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
 
 @Controller('questions')
+@Auth(ValidRoles.admin)
 export class TimelineController {
   constructor(private readonly timelineService: TimelineService) {}
 

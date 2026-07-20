@@ -6,10 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from 'src/auth/auth.module';
 import { Options } from './entities/option.entity';
+import { Question } from 'src/questions/entities/question.entity';
 
 @Module({
   controllers: [OptionsController],
-  imports: [AuthModule, TenantsModule,TypeOrmModule.forFeature([Options]), AuthModule],
+  imports: [AuthModule, TenantsModule,TypeOrmModule.forFeature([Options, Question]), AuthModule],
   providers: [OptionsService],
   exports: [OptionsService, TypeOrmModule],
 })

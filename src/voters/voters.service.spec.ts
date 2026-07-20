@@ -1,18 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { VotersService } from './voters.service';
 
 describe('VotersService', () => {
-  let service: VotersService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [VotersService],
-    }).compile();
-
-    service = module.get<VotersService>(VotersService);
-  });
-
   it('should be defined', () => {
+    const service = new VotersService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
     expect(service).toBeDefined();
   });
 });

@@ -7,6 +7,7 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -40,12 +41,14 @@ export class Options {
   type?: OptionType;
 
   @ManyToOne(() => Election, (election) => election.options, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'electionId' })
   election: Election;
 
-@ManyToOne(() => Question, question => question.options, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Question, question => question.options, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'questionId' })
   question: Question;
 
-@ManyToOne(() => User, (user) => user.elections, {
+  @ManyToOne(() => User, (user) => user.elections, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
@@ -62,6 +65,9 @@ export class Options {
 
   @Column('timestamp', { nullable: true })
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deletedAt?: Date | null;
 
   @BeforeInsert()
   setCreateAt() {

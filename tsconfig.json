@@ -1,21 +1,43 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "moduleResolution": "node",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "types": ["node", "jest"],
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
+    "composite": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@org/nest-auth": ["../../packages/nest-auth/src"],
+      "@org/nest-auth/*": ["../../packages/nest-auth/src/*"],
+      "@org/realtime": ["../../packages/realtime/src"],
+      "@org/realtime/*": ["../../packages/realtime/src/*"],
+      "@org/i18n": ["../../packages/i18n/src"],
+      "@org/i18n/*": ["../../packages/i18n/src/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "../../packages/realtime"
+    },
+    {
+      "path": "../../packages/i18n"
+    },
+    {
+      "path": "../../packages/nest-auth"
+    }
+  ]
 }

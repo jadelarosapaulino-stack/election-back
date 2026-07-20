@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Body,
   UseGuards,
   Req,
@@ -9,24 +11,48 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto, LoginUserDto } from './dto/';
+import { CreateUserDto, EmailDto, LoginUserDto, ResetPasswordDto, UpdateProfileDto } from './dto/';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from './entities/user.entity';
 import { Auth, GetUser, RawHeaders } from 'src/auth/decorators';
 import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { VerifyCodeDto } from './dto/verify-code.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   create(@Body() createUserDto: CreateUserDto) {
     return this.authService.create(createUserDto);
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
+  }
+
+  @Post('verify-code')
+  verifyCode(@Body() dto: VerifyCodeDto) {
+    return this.authService.verifyEmailCode(dto.email, dto.code);
+  }
+
+  @Post('resend-verification-code')
+  resendVerificationCode(@Body() dto: EmailDto) {
+    return this.authService.resendVerificationCode(dto.email);
+  }
+
+  @Post('request-password-reset')
+  requestPasswordReset(@Body() dto: EmailDto) {
+    return this.authService.requestPasswordReset(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.code, dto.password);
   }
 
   @Post('refresh')
@@ -92,6 +118,33 @@ export class AuthController {
       ok: true,
       user
     };
+  }
+
+  // ── GDPR H-07: Account deletion (Right to be forgotten) ────────────────
+
+  @Delete('account')
+  @Auth()
+  deleteAccount(@GetUser() user: User) {
+    return this.authService.requestAccountDeletion(user);
+  }
+
+  // ── GDPR H-08: Data portability ────────────────────────────────────────
+
+  @Get('export-data')
+  @Auth()
+  exportData(@GetUser() user: User) {
+    return this.authService.exportUserData(user);
+  }
+
+  // ── GDPR H-09: Profile rectification ───────────────────────────────────
+
+  @Patch('profile')
+  @Auth()
+  updateProfile(
+    @GetUser() user: User,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(user, dto);
   }
 
 }

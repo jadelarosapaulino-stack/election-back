@@ -12,6 +12,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Options } from './entities/option.entity';
 import { TenantsService } from 'src/tenants/users-settings.service';
 import { User } from 'src/auth/entities/user.entity';
+import { Question } from 'src/questions/entities/question.entity';
+import { StatusType } from 'src/utils/status-type.enum';
 
 @Injectable()
 export class OptionsService {
@@ -20,12 +22,21 @@ export class OptionsService {
   constructor(
     @InjectRepository(Options)
     private readonly optionRepository: Repository<Options>,
+    @InjectRepository(Question)
+    private readonly questionRepository: Repository<Question>,
     private readonly dataSource: DataSource,
   ) {}
 
   async create(createOptionDto: CreateOptionDto, user: User) {
   try {
     const { question, ...optionsDetails } = createOptionDto;
+    const questionId = typeof question === 'string' ? question : question?.id;
+    const ballotQuestion = await this.questionRepository.findOne({
+      where: { id: questionId },
+      relations: { election: true },
+    });
+    if (!ballotQuestion) throw new NotFoundException(`Question with id: ${question} not found`);
+    this.ensureBallotCanBeChanged(ballotQuestion.election?.status);
 
     // 1. Buscar el valor máximo de order para esa pregunta
     const maxOrderResult = await this.optionRepository
@@ -95,6 +106,13 @@ export class OptionsService {
     //       (option: any) => this.optionRepository.create(option)
     // );
 
+    const currentOption = await this.optionRepository.findOne({
+      where: { id },
+      relations: { election: true },
+    });
+    if (!currentOption) throw new NotFoundException(`Option with id: ${id} not fount`);
+    this.ensureBallotCanBeChanged(currentOption.election?.status);
+
     const option = await this.optionRepository.preload({
       id: id,
       ...toUpdate,
@@ -123,22 +141,35 @@ export class OptionsService {
   }
 
   async remove(id: string) {
-    const option = await this.findOne(id);
+    const option = await this.optionRepository.findOne({
+      where: { id },
+      relations: { election: true },
+    });
+    if (!option) throw new NotFoundException(`Option with ${id} not found`);
+    this.ensureBallotCanBeChanged(option.election?.status);
 
-    await this.optionRepository.remove(option);
+    await this.optionRepository.softRemove(option);
+  }
+
+  private ensureBallotCanBeChanged(status?: StatusType): void {
+    if (status === StatusType.RUNNING || status === StatusType.COMPLETED) {
+      throw new BadRequestException('La boleta no se puede modificar una vez iniciada la eleccion.');
+    }
   }
 
   private handleDBExceptions(error: any) {
-    if (error.code == '20505') throw new BadRequestException(error.detail);
     this.logger.error(error);
-    throw new InternalServerErrorException(error.detail);
+    if (error.code == '20505') {
+      throw new BadRequestException('Ya existe un registro con esos datos.');
+    }
+    throw new InternalServerErrorException('Ocurrió un error inesperado.');
   }
 
   async deleteAllOptions(electionId: string) {
     const query = this.optionRepository.createQueryBuilder('option');
     try {
       return await query
-        .delete()
+        .softDelete()
         .where({eletion: electionId})
         .execute();
     } catch (error) {

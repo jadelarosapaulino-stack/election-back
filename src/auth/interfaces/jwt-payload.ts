@@ -1,3 +1,1 @@
-export interface JwtPayload {
-    id: string;
-}
+export { JwtPayload } from '@org/nest-auth';

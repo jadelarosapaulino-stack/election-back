@@ -7,11 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Question } from './entities/question.entity';
 import { QuestionsImgs } from './entities/question-image.entity';
 import { TenantsModule } from 'src/tenants/user-settings.module';
+import { Election } from 'src/elections/entities/election.entity';
 
 @Module({
   controllers: [QuestionsController],
   providers: [QuestionsService],
-  imports: [AuthModule,TenantsModule, TypeOrmModule.forFeature([Question, QuestionsImgs, Options])],
+  imports: [AuthModule,TenantsModule, TypeOrmModule.forFeature([Question, QuestionsImgs, Options, Election])],
   exports: [QuestionsService, TypeOrmModule],
 })
 export class QuestionsModule {}

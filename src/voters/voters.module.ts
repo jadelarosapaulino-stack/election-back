@@ -8,10 +8,13 @@ import { Voter } from './entities/voter.entity';
 import { UtilsService } from 'src/utils/utils.service';
 import { Vote } from 'src/vote/entities/vote.entity';
 import { ElectionsModule } from 'src/elections/elections.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { ElectionConfig } from 'src/elections/election-config/entities/election-config.entity';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   controllers: [VotersController],
-  imports: [forwardRef( () => ElectionsModule), TimelineModule, OptionsModule, TypeOrmModule.forFeature([Voter, Vote])],
+  imports: [forwardRef( () => ElectionsModule), TimelineModule, OptionsModule, AuthModule, CommonModule, TypeOrmModule.forFeature([Voter, Vote, ElectionConfig])],
   providers: [VotersService, UtilsService],
   exports: [VotersService],
 })

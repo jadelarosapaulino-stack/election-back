@@ -1,0 +1,26 @@
+{
+  "name": "backend",
+  "projectType": "application",
+  "root": "apps/backend",
+  "sourceRoot": "apps/backend/src",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/backend", "command": "npm run start" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/backend", "command": "npm run build" },
+      "outputs": ["{projectRoot}/dist", "{workspaceRoot}/dist/apps/backend"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/backend", "command": "npm run test" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/backend", "command": "npm run lint" }
+    }
+  },
+  "tags": []
+}

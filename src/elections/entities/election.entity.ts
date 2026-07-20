@@ -3,6 +3,7 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -41,7 +42,7 @@ export class Election {
   })
   voters: Voter[];
 
-  @Column('enum', { enum: StatusType, default: StatusType.ACTIVWE })
+  @Column('enum', { enum: StatusType, default: StatusType.ACTIVE })
   status?: StatusType;
 
   @Column('timestamp', { nullable: true })
@@ -49,6 +50,9 @@ export class Election {
 
   @Column('timestamp', { nullable: true })
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deletedAt?: Date | null;
 
   @ManyToOne(() => User, (user) => user.elections)
   user: User;

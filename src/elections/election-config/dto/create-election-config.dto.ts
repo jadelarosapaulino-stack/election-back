@@ -1,6 +1,6 @@
 // src/elections/dto/create-election-config.dto.ts
 import { IsOptional, IsString, IsEnum, IsBoolean, IsInt, IsISO8601 } from 'class-validator';
-import { VotingMode, ResultVisibility, TieBreaker } from '../entities/election-config.entity';
+import { VotingMode, ResultVisibility, TieBreaker, ElectionRunMode } from '../entities/election-config.entity';
 
 export class CreateElectionConfigDto {
   @IsString()
@@ -43,12 +43,24 @@ export class CreateElectionConfigDto {
   logoUrl?: string;
 
   @IsOptional()
+  @IsString()
+  theme?: string;
+
+  @IsOptional()
   @IsEnum(ResultVisibility)
   resultVisibility?: ResultVisibility;
 
   @IsOptional()
   @IsEnum(TieBreaker)
   tieBreaker?: TieBreaker;
+
+  @IsOptional()
+  @IsEnum(ElectionRunMode)
+  runMode?: ElectionRunMode;
+
+  @IsOptional()
+  @IsBoolean()
+  allowReceiptDownload?: boolean;
 
   @IsOptional()
   extra?: Record<string, any>;

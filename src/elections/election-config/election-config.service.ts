@@ -16,17 +16,27 @@ export class ElectionConfigService {
       where: { electionId, userId: user.id },
     });
 
-    if (!config) {
-      throw new NotFoundException(
-        `Config not found for election`,
-      );
-    }
-    return config;
+    if (config) return config;
+
+    // Crear configuración por defecto si no existe
+    const now = new Date();
+    const startAt = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    const endAt = new Date(startAt.getTime() + 12 * 60 * 60 * 1000);
+    const defaultConfig = this.configRepo.create({
+      electionId,
+      userId: user.id,
+      user,
+      election: { id: electionId } as any,
+      startAt,
+      endAt,
+    });
+    return this.configRepo.save(defaultConfig);
   }
 
   getElectionStatus(config: ElectionConfig): 'PENDING' | 'STARTED' | 'ENDED' {
     const now = new Date();
 
+    if (!config.startAt) return 'PENDING';
     if (config.startAt && now < config.startAt) return 'PENDING';
     if (config.endAt && now > config.endAt) return 'ENDED';
     return 'STARTED';

@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, DeleteDateColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 export class Imgs {
   @PrimaryGeneratedColumn()
@@ -6,4 +6,7 @@ export class Imgs {
 
   @Column('text')
   url: string;
+
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deletedAt?: Date | null;
 }

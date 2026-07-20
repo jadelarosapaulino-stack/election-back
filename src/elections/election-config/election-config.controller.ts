@@ -13,9 +13,10 @@ import { ElectionConfigLockGuard } from '../guards/election-config-lock.guard';
 import { ElectionConfig } from './entities/election-config.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Auth, GetUser } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
 
 @Controller('election-config')
-@Auth()
+@Auth(ValidRoles.admin)
 export class ElectionConfigController {
   constructor(private readonly configService: ElectionConfigService) {}
 

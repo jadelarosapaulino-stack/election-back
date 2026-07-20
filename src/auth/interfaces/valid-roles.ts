@@ -1,5 +1,1 @@
-export enum ValidRoles {
-    admin = 'admin',
-    superUser = 'super-user',
-    user = 'user'
-}
+export { ValidRoles } from '@org/nest-auth';

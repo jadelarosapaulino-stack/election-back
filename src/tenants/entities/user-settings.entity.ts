@@ -5,6 +5,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   OneToMany,
   Index,
 } from 'typeorm';
@@ -35,4 +36,7 @@ export class UserSettings {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deletedAt?: Date | null;
 }

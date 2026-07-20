@@ -10,6 +10,8 @@ import { TenantsService } from "src/tenants/users-settings.service";
 import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { OrderDto } from "src/options/dto/update-option-order.dto";
 import { User } from "src/auth/entities/user.entity";
+import { Election } from 'src/elections/entities/election.entity';
+import { StatusType } from 'src/utils/status-type.enum';
 
 @Injectable()
 export class QuestionsService {
@@ -20,19 +22,21 @@ export class QuestionsService {
     private readonly questionRepository: Repository<Question>,
     @InjectRepository(Options)
     private readonly optionRepository: Repository<Options>,
+    @InjectRepository(Election)
+    private readonly electionRepository: Repository<Election>,
     private readonly dataSource: DataSource,
     private readonly tenantService: TenantsService, // agregado
   ) {}
 
   async create(createQuestionDto: CreateQuestionDto, user: User) {
     try {
-      const { options, ...questionDetails } = createQuestionDto;
-      const optionsList = options.map(option =>
-        this.optionRepository.create(option)
-      );
+      const { options, election, ...questionDetails } = createQuestionDto;
+      await this.ensureBallotCanBeChanged(election);
+      const optionsList = this.createOptionEntities(options, election, user);
 
       const question = this.questionRepository.create({
         ...questionDetails,
+        ...(election ? { election: { id: election } } : {}),
         options: optionsList,
         userId: user.id, // asignar tenantId
       });
@@ -54,7 +58,7 @@ export class QuestionsService {
     try {
       const [questions, totalPosts] =
         await this.questionRepository.findAndCount({
-          where: [{ election: term, userId: user.id }], // filtro tenantId
+          where: [{ election: { id: term }, userId: user.id }], // filtro tenantId
           take: limit,
           skip: (offset - 1) * limit,
           relations: { options: true },
@@ -88,14 +92,23 @@ export class QuestionsService {
   }
 
   async update(id: string, updateQuestionDto: UpdateQuestionDto, user: User) {
-    const { options, ...toUpdate } = updateQuestionDto;
-    const optionsList = options.map(option => this.optionRepository.create(option));
+    const { options, election, ...toUpdate } = updateQuestionDto;
+    const currentQuestion = await this.questionRepository.findOne({
+      where: { id, userId: user.id },
+      relations: { election: true },
+    });
+    if (!currentQuestion) throw new NotFoundException(`Question with id: ${id} not found`);
+    await this.ensureBallotCanBeChanged(currentQuestion.election?.id);
+    const optionsList = Array.isArray(options)
+      ? this.createOptionEntities(options, election, user)
+      : undefined;
 
     // Preload pregunta verificando tenantId
     const question = await this.questionRepository.preload({
       id,
       ...toUpdate,
-      options: optionsList,
+      ...(optionsList ? { options: optionsList } : {}),
+      ...(election ? { election: { id: election } } : {}),
       userId: user.id, // asignar tenantId
     });
 
@@ -106,11 +119,10 @@ export class QuestionsService {
     await queryRunner.startTransaction();
 
     try {
-      if (options) {
-        await queryRunner.manager.delete(Options, { question: { id }, userId: user.id });
-        question.options = options.map(option =>
-          this.optionRepository.create(option),
-        );
+      if (Array.isArray(options)) {
+        await queryRunner.manager.softDelete(Options, { question: { id }, userId: user.id });
+        const electionId = election || (question.election as any)?.id;
+        question.options = this.createOptionEntities(options, electionId, user);
       }
 
       await queryRunner.manager.save(question);
@@ -126,20 +138,25 @@ export class QuestionsService {
   }
 
   async remove(id: string, user: User) {
-    const question = await this.questionRepository.findOneBy({ id, userId: user.id });
+    const question = await this.questionRepository.findOne({
+      where: { id, userId: user.id },
+      relations: { election: true },
+    });
 
     if (!question) throw new NotFoundException(`Question with id: ${id} not found`);
+    await this.ensureBallotCanBeChanged(question.election?.id);
 
-    await this.questionRepository.delete({ id, userId: user.id });
+    await this.questionRepository.softDelete({ id, userId: user.id });
     return { message: `Question with id ${id} removed` };
   }
 
   async deleteAllQuestions(electionId: string, user: User) {
     try {
+      await this.ensureBallotCanBeChanged(electionId);
       return await this.questionRepository
         .createQueryBuilder('question')
-        .delete()
-        .where('election = :electionId AND userId = :userId', { electionId, userId: user.id })
+        .softDelete()
+        .where('electionId = :electionId AND userId = :userId', { electionId, userId: user.id })
         .execute();
     } catch (error) {
       this.handleDBExceptions(error);
@@ -147,6 +164,14 @@ export class QuestionsService {
   }
 
   async reorderQuestions(dto: OrderDto[], user: User): Promise<boolean> {
+    if (dto.length) {
+      const question = await this.questionRepository.findOne({
+        where: { id: dto[0].id, userId: user.id },
+        relations: { election: true },
+      });
+      if (!question) throw new NotFoundException('Question not found');
+      await this.ensureBallotCanBeChanged(question.election?.id);
+    }
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -169,7 +194,7 @@ export class QuestionsService {
   async questionsCountOfElection(electionId: string, user: User) {
     try {
       return await this.questionRepository.count({
-        where: { election: electionId, userId: user.id },
+        where: { election: { id: electionId }, userId: user.id },
       });
     } catch (error) {
       this.logger.error('Not Found');
@@ -185,10 +210,11 @@ export class QuestionsService {
     try {
       const question = await queryRunner.manager.findOne(this.questionRepository.target, {
         where: { id: questionId, userId: user.id },
-        relations: ['options'],
+        relations: ['options', 'election'],
       });
 
       if (!question) throw new NotFoundException('Question not found');
+      await this.ensureBallotCanBeChanged(question.election?.id);
 
       const optionsMap = new Map(question.options.map(opt => [opt.id, opt]));
       const options = Array.from(optionsMap.values());
@@ -227,10 +253,35 @@ export class QuestionsService {
   }
 
   private handleDBExceptions(error: any) {
-    if (error.code === '23505' || error.code === '20505') { // Postgres or other DB unique violation codes
-      throw new BadRequestException(error.detail);
-    }
     this.logger.error(error);
-    throw new InternalServerErrorException(error.detail);
+    if (error.code === '23505' || error.code === '20505') {
+      throw new BadRequestException('Ya existe un registro con esos datos.');
+    }
+    throw new InternalServerErrorException('Ocurrió un error inesperado.');
+  }
+
+  private async ensureBallotCanBeChanged(electionId?: string): Promise<void> {
+    if (!electionId) return;
+    const election = await this.electionRepository.findOneBy({ id: electionId });
+    if (election?.status === StatusType.RUNNING || election?.status === StatusType.COMPLETED) {
+      throw new BadRequestException('La boleta no se puede modificar una vez iniciada la eleccion.');
+    }
+  }
+
+  private createOptionEntities(
+    options: CreateQuestionDto['options'] | undefined,
+    electionId: string | undefined,
+    user: User,
+  ): Options[] {
+    if (!Array.isArray(options)) return [];
+
+    return options.map((option, index) =>
+      this.optionRepository.create({
+        ...option,
+        order: option.order ?? index + 1,
+        ...(electionId ? { election: { id: electionId } } : {}),
+        userId: user.id,
+      }),
+    );
   }
 }

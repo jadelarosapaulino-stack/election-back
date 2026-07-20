@@ -22,61 +22,30 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { Auth } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
 
 @Controller('voter')
+@Auth(ValidRoles.admin)
 export class VotersController {
   constructor(private readonly votersService: VotersService) {}
-
-  @Post()
-  create(@Body() createVoterDto: CreateVoterDto) {
-    return this.votersService.create(createVoterDto);
-  }
-
-  @Get(':electionId')
-  findAll(
-    @Query() paginationDto: PaginationDto,
-    @Param('electionId', ParseUUIDPipe) electionId: string,
-  ) {
-    return this.votersService.findAll(electionId, paginationDto);
-  }
-
-  @Get(':electionId/all')
-  async findAllVoters(@Param('electionId') electionId: string) {
-    return this.votersService.getVotersOfElection(electionId);
-  }
-
-  @Get('voter/:voterid')
-  findOne(@Param('voterid', ParseUUIDPipe) voterid: string) {
-    return this.votersService.findOne(voterid);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVoterDto: UpdateVoterDto) {
-    return this.votersService.update(id, updateVoterDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.votersService.remove(id);
-  }
-
-  @Delete(':electionId/remove-all')
-  removeAll(@Param('electionId') electionId: string, @GetUser() user: User) {
-    return this.votersService.deleteAllByElection(electionId, user);
-  }
 
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
   async uploadCsv(
     @UploadedFile() file: Express.Multer.File,
     @Body() data: any,
-    @GetUser() user: User
+    @GetUser() user: User,
   ) {
+    if (String(data?.confirmed || '').toLowerCase() !== 'true') {
+      return this.votersService.previewImportFromCsv(file.buffer, data?.electionId, user);
+    }
+
     const resp = await this.votersService.importFromCsv(
       file.buffer,
       data?.electionId,
       data?.metadata,
-      user      
+      user,
     );
     return resp;
   }
@@ -147,10 +116,73 @@ export class VotersController {
   }
 
   @Get('duplicates/preview')
-  async previewDuplicates(@Query('electionId') electionId: string, @GetUser() user: User) {
+  async previewDuplicates(@Query('electionId') electionId: string) {
     if (!electionId) {
       throw new BadRequestException('electionId is required');
     }
-    return this.votersService.previewDuplicatesByElection(electionId, user);
+    return this.votersService.previewDuplicatesByElection(electionId);
+  }
+
+  @Get(':electionId/all')
+  async findAllVoters(@Param('electionId') electionId: string) {
+    return this.votersService.getVotersOfElection(electionId);
+  }
+
+  @Post(':electionId')
+  create(
+    @Param('electionId', ParseUUIDPipe) electionId: string,
+    @Body() createVoterDto: CreateVoterDto,
+    @GetUser() user: User,
+  ) {
+    return this.votersService.create(electionId, createVoterDto, user);
+  }
+
+  @Get(':electionId')
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Param('electionId', ParseUUIDPipe) electionId: string,
+  ) {
+    return this.votersService.findAll(electionId, paginationDto);
+  }
+
+  @Get('voter/:voterid')
+  findOne(@Param('voterid', ParseUUIDPipe) voterid: string) {
+    return this.votersService.findOne(voterid);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateVoterDto: UpdateVoterDto) {
+    return this.votersService.update(id, updateVoterDto);
+  }
+
+  @Delete(':electionId/remove-all')
+  removeAll(@Param('electionId') electionId: string, @GetUser() user: User) {
+    return this.votersService.deleteAllByElection(electionId, user);
+  }
+
+  @Post(':electionId/invitations')
+  sendInvitations(
+    @Param('electionId') electionId: string,
+    @Body() body: { scope?: 'all' | 'pending' },
+    @GetUser() user: User,
+  ) {
+    return this.votersService.sendInvitations(
+      electionId,
+      user,
+      body?.scope === 'all' ? 'all' : 'pending',
+    );
+  }
+
+  @Post(':electionId/reminders')
+  sendReminders(
+    @Param('electionId') electionId: string,
+    @GetUser() user: User,
+  ) {
+    return this.votersService.sendReminders(electionId, user);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.votersService.remove(id);
   }
 }

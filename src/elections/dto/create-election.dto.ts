@@ -16,13 +16,15 @@ export class CreateElectionDto {
   @MinLength(10)
   description: string;
 
+  @IsOptional()
   @IsDateString()
-  startDate: string;
+  startDate?: string;
 
+  @IsOptional()
   @IsDateString()
-  endDate: string;
+  endDate?: string;
 
-  @IsEnum({ type: 'enum', enum: StatusType, default: StatusType.ACTIVWE })
+  @IsEnum(StatusType)
   @IsOptional()
   status?: StatusType;
 

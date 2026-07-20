@@ -26,8 +26,11 @@ export class User {
   @Column('text')
   fullName: string;
 
+  @Column('text', { nullable: true })
+  organization?: string;
+
   @Column('bool', {
-    default: true,
+    default: false,
   })
   isActive: boolean;
 
@@ -39,6 +42,24 @@ export class User {
 
   @Column({ nullable: true })
   refreshToken?: string;
+
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ type: 'text', nullable: true, select: false })
+  verificationCode?: string;
+
+  @Column({ type: 'timestamptz', nullable: true, select: false })
+  verificationExpiresAt?: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  verifiedAt?: Date;
+
+  @Column({ type: 'text', nullable: true, select: false })
+  passwordResetCode?: string;
+
+  @Column({ type: 'timestamptz', nullable: true, select: false })
+  passwordResetExpiresAt?: Date;
 
   @OneToMany(() => Election, (election) => election.user, { eager: true })
   elections: Election;

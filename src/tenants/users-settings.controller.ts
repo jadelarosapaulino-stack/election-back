@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
 import { UserSettings } from './entities/user-settings.entity';
 import { TenantsService } from './users-settings.service';
+import { Auth } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
 
 @Controller('tenants')
+@Auth(ValidRoles.admin)
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 

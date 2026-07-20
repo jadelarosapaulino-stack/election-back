@@ -1,4 +1,2 @@
-export { GetUser } from './get-user.decorator';
-export { RawHeaders } from "./raw-headers.decorators";
-export { Auth } from "./auth.decorator";
-export { RoleProtected } from "./role-protected.decorator";
+// Re-export from shared package for backward compatibility
+export { Auth, GetUser, RawHeaders, RoleProtected, META_ROLES } from '@org/nest-auth';

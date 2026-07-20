@@ -5,22 +5,25 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
+import { UserConsent } from './entities/user-consent.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { CommonModule } from 'src/common/common.module';
+import { PlanPurchase } from 'src/billing/entities/plan-purchase.entity';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([User]),
+    CommonModule,
+    TypeOrmModule.forFeature([User, UserConsent, PlanPurchase]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        // console.log('JWT SECRET', configService.get('JWT_SECRET'));
         return {
           secret: configService.get('JWT_SECRET'),
           signOptions: {

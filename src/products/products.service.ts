@@ -115,7 +115,7 @@ export class ProductsService {
     try {
 
       if ( images ) {
-        await queryRunner.manager.delete( ProductImgs, { product: { id }});
+        await queryRunner.manager.softDelete(ProductImgs, { product: { id } });
         product.images = images.map( image => this.productImageRepository.create({url: image}))
       }
 
@@ -135,7 +135,7 @@ export class ProductsService {
   async remove(id: string) {
     const product = await this.findOne(id);
 
-    await this.productRepository.remove(product);
+    await this.productRepository.softRemove(product);
   }
 
   async deleteAllProduct() {
@@ -143,7 +143,7 @@ export class ProductsService {
 
     try {
       return await query
-                  .delete()
+                  .softDelete()
                   .where({})
                   .execute()
     } catch (error) {
@@ -152,9 +152,10 @@ export class ProductsService {
   }
 
   private handleDBExceptions(error: any) {
-    if (error.code == '20505') throw new BadRequestException(error.detail);
-
     this.logger.error(error);
-    throw new InternalServerErrorException(error.detail);
+    if (error.code == '20505') {
+      throw new BadRequestException('Ya existe un registro con esos datos.');
+    }
+    throw new InternalServerErrorException('Ocurrió un error inesperado.');
   }
 }

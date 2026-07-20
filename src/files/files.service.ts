@@ -8,7 +8,7 @@ export class FilesService {
  
   
   getStaticFile(fileName: string) {
-    const path = join(__dirname, '../../static/uploads', fileName);
+    const path = join(process.cwd(), 'static', 'uploads', fileName);
 
     if ( !existsSync(path)) 
         throw new BadRequestException(`No product found with image ${ fileName }`)
@@ -17,7 +17,7 @@ export class FilesService {
   }  
 
   deleteFile(fileName: string) {
-    const path = join(__dirname, '../../static/uploads', fileName);
+    const path = join(process.cwd(), 'static', 'uploads', fileName);
     if ( !existsSync(path)) 
         throw new BadRequestException(`No product found with image ${ fileName }`);
     try {
@@ -26,7 +26,7 @@ export class FilesService {
       fs.unlinkSync(path);
       return { message: `File ${ fileName } deleted successfully` };
     } catch (error) {
-      throw new BadRequestException(`Error deleting file ${ fileName }: ${ error.message }`);
+      throw new BadRequestException('No se pudo eliminar el archivo. Intentá de nuevo.');
     }
   } 
 }

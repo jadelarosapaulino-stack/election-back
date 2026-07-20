@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ProductImgs } from "./product-image.entity.";
 
 @Entity({name: 'products'})
@@ -48,6 +48,9 @@ export class Product {
         {cascade: true, eager: true}
     )
     images?: ProductImgs[];
+
+    @DeleteDateColumn({ type: 'timestamp', nullable: true })
+    deletedAt?: Date | null;
 
     @BeforeInsert()
     // @BeforeUpdate()

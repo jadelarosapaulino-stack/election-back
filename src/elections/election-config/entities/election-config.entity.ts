@@ -33,6 +33,11 @@ export enum TieBreaker {
   BY_LEAST_ERRORS = 'BY_LEAST_ERRORS',
 }
 
+export enum ElectionRunMode {
+  DEMO = 'DEMO',
+  PRODUCTION = 'PRODUCTION',
+}
+
 @Entity('election_configs')
 @Index(['electionId', 'userId'], { unique: true })
 export class ElectionConfig {
@@ -94,7 +99,7 @@ endAt?: Date;
   logoUrl?: string;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
-  theme?: string; // nombre del tema css/tailwind
+  theme?: string; // nombre del tema CSS
 
   // Resultados
   @Column({
@@ -107,8 +112,18 @@ endAt?: Date;
   @Column({ type: 'enum', enum: TieBreaker, default: TieBreaker.RANDOM })
   tieBreaker: TieBreaker;
 
+  @Column({
+    type: 'enum',
+    enum: ElectionRunMode,
+    default: ElectionRunMode.PRODUCTION,
+  })
+  runMode: ElectionRunMode;
+
   @Column({ type: 'boolean', default: false })
   allowWriteIns: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  allowReceiptDownload: boolean;
 
   @Column({ type: 'json', nullable: true })
   extra?: Record<string, any>; // campo libre para futuras opciones (e.g. widgets, webhooks)

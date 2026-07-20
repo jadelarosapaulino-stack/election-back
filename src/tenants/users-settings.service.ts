@@ -34,7 +34,7 @@ export class TenantsService {
 
   async remove(id: string) {
     const tenant = await this.findOne(id);
-    await this.tenantRepo.remove(tenant);
+    await this.tenantRepo.softRemove(tenant);
     return { message: `Tenant ${id} removed successfully` };
   }
 

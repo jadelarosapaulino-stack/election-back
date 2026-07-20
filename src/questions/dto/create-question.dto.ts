@@ -24,6 +24,14 @@ export class CreateQuestionDto {
   @IsNumber()
   order: number;
 
+  @IsNumber()
+  @IsOptional()
+  minSelect?: number;
+
+  @IsNumber()
+  @IsOptional()
+  maxSelect?: number;
+
   @IsArray()
   @IsOptional()
   options: Options[];

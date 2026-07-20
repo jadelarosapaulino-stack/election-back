@@ -6,6 +6,7 @@ export class ResultDto<T> {
   totalPages: number = 0;
   currentPage: number = 1;
   limit: number = 10;
+  stats?: Record<string, any>;
 
   constructor(init?: Partial<ResultDto<T>>) {
     if (init) {
